@@ -1,0 +1,3 @@
+#!/bin/bash
+
+sudo nft delete table ip grub-testbed

@@ -1,0 +1,23 @@
+#!/bin/bash
+
+hostaddr=10.31.0.1/24
+
+tapdev=$1
+gwdev=$(ip -j route show default | jq -r .[].dev)
+
+sudo sh -x <<- EOF
+	ip link set up $tapdev
+	ip address add $hostaddr dev $tapdev
+
+	sysctl -w net.ipv4.conf.$tapdev.forwarding=1
+	sysctl -w net.ipv4.conf.$gwdev.forwarding=1
+EOF
+
+sudo nft -f - <<- EOF
+	table ip kvm-testbed {
+		chain nat-postrouting {
+			type nat hook postrouting priority 100;
+			oif $gwdev masquerade
+		}
+	}
+EOF
